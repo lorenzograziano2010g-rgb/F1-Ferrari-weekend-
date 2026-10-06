@@ -10,6 +10,13 @@
   "theme_color": "#10131a",
   "lang": "it",
   "icons": [
-    {"src":"icons/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+    "icons": [
+  {
+    "src": "icon.jpg",
+    "sizes": "512x512",
+    "type": "image/jpeg"
+  }
+]
+
   ]
 }
