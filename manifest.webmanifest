@@ -1,5 +1,5 @@
 {
-  "name": "Scuderia Ferrari · Weekend Hub",
+  "name": "Scuderia Ferrari Weekend Hub",
   "short_name": "Ferrari Hub",
   "description": "Weekend Hub Ferrari F1 2026",
   "start_url": "./",
@@ -10,13 +10,10 @@
   "theme_color": "#10131a",
   "lang": "it",
   "icons": [
-    "icons": [
-  {
-    "src": "icon.jpg",
-    "sizes": "512x512",
-    "type": "image/jpeg"
-  }
-]
-
+    {
+      "src": "icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
   ]
 }
