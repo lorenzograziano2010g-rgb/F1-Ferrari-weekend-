@@ -356,6 +356,65 @@ async function aggiornaClassificheLive() {
 
 aggiornaClassificheLive();
 setInterval(aggiornaClassificheLive, 6 * 60 * 60 * 1000);
+ /* =========================
+   TEST CONNESSIONE LIVE
+   ========================= */
+
+function mostraStatoLive() {
+    let badge = document.getElementById("live-test");
+
+    if (!badge) {
+        badge = document.createElement("div");
+        badge.id = "live-test";
+
+        badge.style.cssText = `
+            position:fixed;
+            top:10px;
+            left:50%;
+            transform:translateX(-50%);
+            z-index:9999;
+            background:#111827;
+            color:#22c55e;
+            padding:7px 12px;
+            border-radius:999px;
+            font-size:12px;
+            font-weight:700;
+            box-shadow:0 4px 15px rgba(0,0,0,.3);
+        `;
+
+        document.body.appendChild(badge);
+    }
+
+    const ora = new Date().toLocaleTimeString("it-IT", {
+        hour:"2-digit",
+        minute:"2-digit"
+    });
+
+    badge.textContent = `🟢 LIVE — dati ricevuti alle ${ora}`;
+
+    setTimeout(() => {
+        badge.remove();
+    }, 10000);
+}
+
+async function testConnessioneLive() {
+    try {
+        const risposta = await fetch(
+            "https://api.jolpi.ca/ergast/f1/current.json"
+        );
+
+        if (!risposta.ok) throw new Error();
+
+        await risposta.json();
+
+        mostraStatoLive();
+
+    } catch (errore) {
+        console.log("❌ Connessione live non riuscita");
+    }
+}
+
+testConnessioneLive();
 </script>
 </body>
 </html>
