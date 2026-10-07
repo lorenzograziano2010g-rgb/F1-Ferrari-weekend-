@@ -5,115 +5,85 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Scuderia Ferrari · Weekend Hub</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
 <script>tailwind.config={theme:{extend:{colors:{fr:{red:'#E8002D',yel:'#FFEB00',blk:'#10131a',card:'#1b1f28',bd:'#2f3542'}},fontFamily:{sans:['Inter','system-ui','sans-serif']}}}}</script>
 <style>
-body{background-color:#12151c;color:#f3f4f6;font-family:'Inter',sans-serif;margin:0;padding-bottom:90px;-webkit-tap-highlight-color:transparent}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+body{background-color:#12151c;color:#f3f4f6;font-variant-numeric:tabular-nums;background-image:radial-gradient(circle at 10% 10%,rgba(232,0,45,.08) 0%,transparent 40%),radial-gradient(circle at 90% 80%,rgba(255,235,0,.03) 0%,transparent 40%);background-attachment:fixed;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));-webkit-tap-highlight-color:transparent}
+.carbon{background-color:#12151b;background-image:repeating-linear-gradient(45deg,#181c24 0,#181c24 1px,transparent 0,transparent 50%);background-size:10px 10px}
+.ns{scrollbar-width:none}.ns::-webkit-scrollbar{display:none}
 .pane{display:none}.pane.on{display:block}
-.ns::-webkit-scrollbar{display:none}.ns{scrollbar-width:none}
+#sheet{transform:translateY(100%);transition:transform .25s ease}#sheet.on{transform:none}
+#veil{opacity:0;pointer-events:none;transition:opacity .25s}#veil.on{opacity:1;pointer-events:auto}
+[class*="bg-fr-card"]{background-image:linear-gradient(160deg,rgba(255,255,255,.045),transparent 55%);box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 8px 20px -12px rgba(0,0,0,.6)}
+[class*="rounded-xl"]{border-radius:16px}
+.chipb{flex-shrink:0;white-space:nowrap;background:#10131a;border:1px solid #2f3542;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600;color:#d1d5db}
+.chipb.on{background:#E8002D;border-color:#E8002D;color:#fff}
+select{color-scheme:dark}
 </style>
 </head>
-<body class="antialiased">
+<body class="font-sans antialiased min-h-screen">
 
-<header class="sticky top-0 z-40 bg-fr-blk/95 backdrop-blur border-b border-fr-bd">
+<header class="sticky z-40 bg-fr-blk/95 backdrop-blur border-b border-fr-bd" style="top:env(safe-area-inset-top,0px)">
  <div class="h-1 bg-gradient-to-r from-fr-red via-fr-red to-fr-yel"></div>
- <div class="max-w-3xl mx-auto px-3 py-2">
+ <div class="max-w-3xl mx-auto px-3 pt-2 pb-2">
   <div class="flex items-center gap-2 mb-2">
-   <div class="w-8 h-8 bg-fr-red rounded-lg flex items-center justify-center font-bold">🏁</div>
-   <div><div class="text-[10px] font-bold uppercase text-fr-yel">Scuderia Ferrari HP</div><h1 class="text-sm font-extrabold">F1 Hub 2026</h1></div>
+   <div class="w-8 h-8 bg-fr-red rounded-lg flex items-center justify-center shadow-lg shadow-fr-red/40">🏁</div>
+   <div class="leading-tight"><div class="text-[10px] font-bold uppercase tracking-widest text-fr-yel">Scuderia Ferrari HP · F1 2026</div><h1 class="text-base font-extrabold">Weekend Hub</h1></div>
   </div>
-  <div id="wk" class="flex gap-2 overflow-x-auto ns pb-1"></div>
+  <div id="wk" class="flex gap-2 overflow-x-auto ns"></div>
  </div>
 </header>
 
-<main class="max-w-3xl mx-auto px-3 py-3 space-y-3">
- <div id="hero" class="bg-fr-card border border-fr-bd rounded-2xl p-4"></div>
+<main class="max-w-3xl mx-auto px-3 py-3 space-y-3 pb-28">
+ <div id="hero"></div>
+ <nav id="tabs" class="fixed bottom-0 left-0 right-0 z-40 bg-fr-blk/95 backdrop-blur border-t border-fr-bd" style="padding-bottom:env(safe-area-inset-bottom,0px)"><div class="max-w-3xl mx-auto grid grid-cols-6">
+  <button data-t="prog"><span class="text-lg block">📅</span>Orari</button><button data-t="strat"><span class="text-lg block">🧠</span>Strategie</button><button data-t="ris"><span class="text-lg block">🏁</span>Risultati</button><button data-t="camp"><span class="text-lg block">🏆</span>Classifica</button><button data-t="wx"><span class="text-lg block">🌦️</span>Meteo</button><button data-t="play"><span class="text-lg block">🎮</span>Gioca</button>
+ </div></nav>
 
- <nav class="fixed bottom-0 left-0 right-0 z-40 bg-fr-blk/95 border-t border-fr-bd">
-  <div class="max-w-3xl mx-auto grid grid-cols-4 text-center">
-   <button onclick="setTab('prog')" id="btn-prog" class="py-3 text-xs font-bold text-fr-red border-t-2 border-fr-red">📅 Orari</button>
-   <button onclick="setTab('camp')" id="btn-camp" class="py-3 text-xs font-bold text-gray-400 border-t-2 border-transparent">🏆 Classifica</button>
-   <button onclick="setTab('wx')" id="btn-wx" class="py-3 text-xs font-bold text-gray-400 border-t-2 border-transparent">🌦️ Meteo</button>
-   <button onclick="setTab('info')" id="btn-info" class="py-3 text-xs font-bold text-gray-400 border-t-2 border-transparent">ℹ️ Info</button>
-  </div>
- </nav>
+ <section id="p-prog" class="pane"></section>
+ <section id="p-strat" class="pane"></section>
+ <section id="p-ris" class="pane"></section>
 
- <section id="p-prog" class="pane on space-y-2"></section>
  <section id="p-camp" class="pane space-y-3">
-  <div class="bg-fr-card border border-fr-bd rounded-xl p-3">
-   <h2 class="font-bold text-sm mb-2">Piloti 2026</h2>
-   <table class="w-full text-xs">
-    <tr><td class="py-1.5 font-bold">3°</td><td class="py-1.5 text-white">Lewis Hamilton (Ferrari)</td><td class="py-1.5 text-right font-bold text-fr-yel">214 pts</td></tr>
-    <tr><td class="py-1.5 font-bold">4°</td><td class="py-1.5 text-white">Charles Leclerc (Ferrari)</td><td class="py-1.5 text-right font-bold text-fr-yel">191 pts</td></tr>
-   </table>
+  <div id="seg" class="flex gap-2"></div>
+  <div id="c-drv" class="sub space-y-3">
+   <div class="bg-fr-card border border-fr-bd rounded-xl p-3"><div class="flex justify-between mb-2"><h2 class="font-bold text-sm">Piloti 2026</h2><span class="text-[10px] text-gray-400">dopo Sepang · 16/24</span></div><table class="w-full text-xs"><tbody id="db" class="divide-y divide-fr-bd/50"></tbody></table></div>
+   <div class="bg-fr-card border border-fr-bd rounded-xl p-3"><div class="relative h-44"><canvas id="dc"></canvas></div></div>
+  </div>
+  <div id="c-con" class="sub space-y-3 hidden">
+   <div class="bg-fr-card border border-fr-bd rounded-xl p-3"><h2 class="font-bold text-sm mb-2">Costruttori 2026</h2><table class="w-full text-xs"><tbody id="cb" class="divide-y divide-fr-bd/50"></tbody></table></div>
+   <div class="bg-fr-card border border-fr-bd rounded-xl p-3"><div class="relative h-52"><canvas id="cc"></canvas></div></div>
+  </div>
+  <div id="c-fer" class="sub hidden bg-fr-card border border-fr-bd rounded-xl p-3">
+   <h2 class="text-center text-lg font-black mb-3">Hamilton vs Leclerc</h2>
+   <div class="grid grid-cols-2 gap-2">
+    <div class="carbon border border-fr-bd rounded-xl p-3"><span class="text-2xl font-black text-fr-yel">#44</span><h3 class="text-sm font-black">Lewis Hamilton</h3><p class="text-xs text-gray-400 mb-2">3° · 214 pts</p><div class="space-y-1.5 text-[11px]" id="h1"></div></div>
+    <div class="carbon border border-fr-bd rounded-xl p-3"><span class="text-2xl font-black text-fr-red">#16</span><h3 class="text-sm font-black">Charles Leclerc</h3><p class="text-xs text-gray-400 mb-2">4° · 191 pts</p><div class="space-y-1.5 text-[11px]" id="h2"></div></div>
+   </div>
   </div>
  </section>
- <section id="p-wx" class="pane space-y-3"></section>
- <section id="p-info" class="pane">
-  <div class="bg-fr-card border border-fr-bd rounded-xl p-4 text-xs text-gray-300 space-y-2">
-   <h2 class="font-bold text-sm text-white">Informazioni Hub</h2>
-   <p>App creata per la Scuderia Ferrari. Gli orari si aggiornano automaticamente in base al GP selezionato in alto.</p>
-  </div>
- </section>
+
+ <section id="p-wx" class="pane"></section>
+ <section id="p-play" class="pane"></section>
 </main>
 
+<div id="veil" class="fixed inset-0 bg-black/60 z-50"></div>
+<div id="sheet" class="fixed left-0 right-0 bottom-0 z-50 bg-fr-card border-t border-fr-red rounded-t-2xl p-4 max-w-3xl mx-auto" style="padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))"></div>
+
 <script>
+const $=s=>document.querySelector(s);
+const S=(n,a,b,d,note)=>({n,a:new Date(a),b:b?new Date(b):null,d,note});
 const W={
- sg:{id:"sg",name:"Singapore",dates:"9–11 Ott",flag:"🇸🇬",lat:1.2914,lon:103.8644,sess:[["Prove Libere 1","Venerdì, 09:30"],["Qualifica Sprint","Venerdì, 13:30"],["Sprint Race","Sabato, 10:00"],["Qualifiche GP","Sabato, 14:00"],["Gran Premio","Domenica, 13:00"]]},
- usa:{id:"usa",name:"Austin",dates:"23–25 Ott",flag:"🇺🇸",lat:30.1328,lon:-97.6411,sess:[["Prove Libere 1","Venerdì, 18:30"],["Qualifica Sprint","Venerdì, 22:30"],["Sprint Race","Sabato, 18:00"],["Qualifiche GP","Sabato, 22:00"],["Gran Premio","Domenica, 19:00"]]},
- mex:{id:"mex",name:"Messico",dates:"30 Ott - 1 Nov",flag:"🇲🇽",lat:19.4042,lon:-99.0907,sess:[["Prove Libere 1","Venerdì, 18:30"],["Prove Libere 2","Venerdì, 22:00"],["Prove Libere 3","Sabato, 17:30"],["Qualifiche GP","Sabato, 21:00"],["Gran Premio","Domenica, 20:00"]]}
-};
+ mad:{id:"mad",name:"Madrid",tag:"Passato",dates:"11–13 set",tz:"Europe/Madrid",tzn:"Spagna",kind:"Weekend classico",title:"GP di Spagna · Madring",hero:["Vince Antonelli · Verstappen 2°, Norris 3°","Leclerc 4°. Hamilton ritirato per i freni."],
+  sess:[S("Prove libere 1","2026-09-11T11:30Z","2026-09-11T12:30Z","60 min","Prima sessione in assoluto sul nuovo Madring."),S("Prove libere 2","2026-09-11T15:00Z","2026-09-11T16:00Z","60 min","Antonelli davanti, Leclerc 2° a 0,113 s."),S("Prove libere 3","2026-09-12T10:30Z","2026-09-12T11:30Z","60 min","Antonelli primo. Incidente di Hamilton all'ultima curva con bandiera rossa."),S("Qualifica","2026-09-12T14:00Z","2026-09-12T15:00Z","60 min","Pole a sorpresa di Norris davanti ad Antonelli. Hamilton 4°, Leclerc 5°."),S("Gara","2026-09-13T13:00Z","2026-09-13T15:00Z","57 giri · max 2 h","Prima gara sul Madring: vince Antonelli, con una sola sosta anche per Verstappen.")],
+  rec:["Norris partiva dalla pole ma ha chiuso 3°: secondo una cronaca, un colpo di sfortuna gli ha tolto una vittoria che sembrava sicura.","Antonelli ha vinto (8ª vittoria stagionale) con una sola sosta e ha portato a 81 punti il vantaggio su Russell, 5° al traguardo.","Ferrari: Hamilton si è ritirato per problemi ai freni, primo ritiro stagionale, e in gara ha detto che le speranze mondiali sono finite. Leclerc 4° a 29 s dal vincitore."]},
+ aze:{id:"aze",name:"Baku",tag:"Passato",dates:"24–26 set",tz:"Asia/Baku",tzn:"Azerbaigian",kind:"Gara di sabato",title:"GP dell'Azerbaigian",hero:["Vince Russell · Verstappen 2° a 0,196 s","Leclerc 4°, Hamilton 6°. Norris ritirato."],
+  sess:[S("Prove libere 1","2026-09-24T08:30Z","2026-09-24T09:30Z","60 min","Giovedì: tutto il weekend è anticipato di un giorno."),S("Prove libere 2","2026-09-24T12:00Z","2026-09-24T13:00Z","60 min","Simulazioni di passo gara."),S("Prove libere 3","2026-09-25T08:30Z","2026-09-25T09:30Z","60 min","Ultima messa a punto."),S("Qualifica","2026-09-25T12:00Z","2026-09-25T13:00Z","60 min","Pole di Russell."),S("Gara","2026-09-26T11:00Z","2026-09-26T13:00Z","51 giri · max 2 h","Di sabato per non coincidere con la giornata nazionale di lutto. Russell vince su Verstappen, con due Safety Car.")],
+  rec:["Pole e vittoria di Russell, con 0,196 s su Verstappen e due Safety Car.","Leclerc è scivolato dal 2° al 5° posto nei primi giri e ha chiuso 4°. Hamilton 6°.","Piastri era 3° ma ha perso molte posizioni dopo un bloccaggio alla curva 1."]},
+ sep:{id:"sep",hero:["Vince Verstappen · Ferrari P3 e P4 (+27 punti)","Russell ritirato per guasto, Antonelli 2°."],rec:["Ferrari ha schierato entrambe le auto con gomme soft in una gara bagnata: una scelta che ha mandato le auto in fondo al gruppo. Hamilton ha rifiutato di rientrare ed è risalito fino al podio.","Red Bull ha vinto con il giusto momento per le intermedie. Per Mercedes il guasto di Russell ha fatto salire a 84 punti il vantaggio di Antonelli."],name:"Sepang",tag:"Ultimo",dates:"2–4 ott",tz:"Asia/Kuala_Lumpur",tzn:"Malesia",kind:"Weekend classico",title:"Bahrain GP in Malaysia",
+  sess:[S("Prove libere 1","2026-10-02T04:30Z","2026-10-02T05:30Z","60 min","Prima sessione di prove."),S("Prove libere 2","2026-10-02T08:00Z","2026-10-02T09:00Z","60 min","Simulazioni di passo gara."),S("Prove libere 3","2026-10-03T04:30Z","2026-10-03T05:30Z","60 min","Ultima messa a punto prima della qualifica."),S("Qualifica","2026-10-03T08:00Z","2026-10-03T09:00Z","60 min","Definisce la griglia di domenica."),S("Gara","2026-10-04T07:00Z","2026-10-04T09:00Z","max 2 h","Verstappen vince, Hamilton P3 e Leclerc P4.")]},
+ sg:{id:"sg",name:"Singapore",tag:"Prossimo",dates:"9–11 ott",tz:"Asia/Singapore",tzn:"Singapore",kind:"Weekend Sprint",title:"GP di Singapore",
+  sess:[S("Prove libere 1","2026-10-09T08:30Z","2026-10-09T09:30Z","60 min","Unica sessione di prove: poi si entra in parco chiuso."),S("Qualifica Sprint","2026-10-09T12:30Z","2026-10-09T13:14Z","44 min","Definisce la griglia della Sprint. Assetti bloccati fino alla Sprint."),S("Sprint","2026-10-
 
-let curW="sg", curTab="prog";
-
-function renderWk(){
- document.getElementById("wk").innerHTML=Object.values(W).map(w=>`
-  <button onclick="curW='${w.id}';render()" class="shrink-0 px-3 py-2 rounded-xl border text-left ${w.id===curW?'bg-fr-red border-fr-red text-white':'bg-fr-card border-fr-bd text-gray-300'}">
-   <div class="text-[10px] uppercase font-semibold">${w.flag} ${w.dates}</div>
-   <div class="text-xs font-extrabold">${w.name}</div>
-  </button>`).join("");
- 
- const w=W[curW];
- document.getElementById("hero").innerHTML=`
-  <div class="text-[10px] font-bold uppercase text-fr-yel">${w.flag} GP di ${w.name} (${w.dates})</div>
-  <div class="text-base font-black mt-1">Weekend in corso</div>
-  <div class="text-xs text-gray-400 mt-0.5">Orari ufficiali in ora italiana (CET/CEST)</div>`;
-
- document.getElementById("p-prog").innerHTML=w.sess.map(s=>`
-  <div class="bg-fr-card border border-fr-bd rounded-xl p-3 flex justify-between items-center">
-   <div class="text-sm font-bold">${s[0]}</div>
-   <div class="text-xs font-black text-fr-yel bg-fr-blk px-2.5 py-1 rounded-lg border border-fr-bd">${s[1]}</div>
-  </div>`).join("");
-}
-
-async function renderWx(){
- const w=W[curW];
- const box=document.getElementById("p-wx");
- box.innerHTML=`<div class="bg-fr-card border border-fr-bd rounded-xl p-4 text-center text-xs text-gray-400">Caricamento meteo...</div>`;
- try{
-  const res=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${w.lat}&longitude=${w.lon}&daily=temperature_2m_max,precipitation_probability_max&timezone=auto`);
-  const data=await res.json();
-  const days=data.daily.time.slice(0,3);
-  const tmax=data.daily.temperature_2m_max;
-  const rain=data.daily.precipitation_probability_max;
-  
-  box.innerHTML=`<div class="bg-fr-card border border-fr-bd rounded-xl p-3"><h2 class="font-bold text-sm mb-2">Meteo Live · ${w.name}</h2><div class="grid grid-cols-3 gap-2 text-center">`+
-   days.map((d,i)=>`<div class="bg-fr-blk border border-fr-bd rounded-lg p-2"><div class="text-[10px] text-gray-400">${d}</div><div class="text-xl my-1">🌤️</div><div class="font-black text-xs">${tmax[i]}°C</div><div class="text-[10px] text-fr-yel">☔ ${rain[i]}%</div></div>`).join("")+`</div></div>`;
- }catch(e){
-  box.innerHTML=`<div class="bg-fr-card border border-fr-bd rounded-xl p-4 text-center text-xs text-red-400">Impossibile caricare il meteo.</div>`;
- }
-}
-
-function setTab(t){
- curTab=t;
- ["prog","camp","wx","info"].forEach(x=>{
-  document.getElementById("p-"+x).classList.toggle("on",x===t);
-  document.getElementById("btn-"+x).className="py-3 text-xs font-bold border-t-2 "+(x===t?"text-fr-red border-fr-red":"text-gray-400 border-transparent");
- });
- if(t==="wx")renderWx();
-}
-
-renderWk();
-</script>
-</body>
-</html>
