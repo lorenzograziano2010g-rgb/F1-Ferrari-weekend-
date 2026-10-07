@@ -5,142 +5,91 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Scuderia Ferrari · Weekend Hub</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
 <script>tailwind.config={theme:{extend:{colors:{fr:{red:'#E8002D',yel:'#FFEB00',blk:'#10131a',card:'#1b1f28',bd:'#2f3542'}},fontFamily:{sans:['Inter','system-ui','sans-serif']}}}}</script>
 <style>
-:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
-body{background-color:#12151c;color:#f3f4f6;font-variant-numeric:tabular-nums;background-image:radial-gradient(circle at 10% 10%,rgba(232,0,45,.08) 0%,transparent 40%),radial-gradient(circle at 90% 80%,rgba(255,235,0,.03) 0%,transparent 40%);background-attachment:fixed;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));-webkit-tap-highlight-color:transparent}
-.carbon{background-color:#12151b;background-image:repeating-linear-gradient(45deg,#181c24 0,#181c24 1px,transparent 0,transparent 50%);background-size:10px 10px}
-.ns{scrollbar-width:none}.ns::-webkit-scrollbar{display:none}
+body{background-color:#12151c;color:#f3f4f6;font-family:'Inter',sans-serif;margin:0;padding-bottom:90px;-webkit-tap-highlight-color:transparent}
 .pane{display:none}.pane.on{display:block}
-#sheet{transform:translateY(100%);transition:transform .25s ease}#sheet.on{transform:none}
-#veil{opacity:0;pointer-events:none;transition:opacity .25s}#veil.on{opacity:1;pointer-events:auto}
-[class*="bg-fr-card"]{background-image:linear-gradient(160deg,rgba(255,255,255,.045),transparent 55%);box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 8px 20px -12px rgba(0,0,0,.6)}
-[class*="rounded-xl"]{border-radius:16px}
-.chipb{flex-shrink:0;white-space:nowrap;background:#10131a;border:1px solid #2f3542;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600;color:#d1d5db}
-.chipb.on{background:#E8002D;border-color:#E8002D;color:#fff}
-select{color-scheme:dark}
+.ns::-webkit-scrollbar{display:none}.ns{scrollbar-width:none}
 </style>
 </head>
-<body class="font-sans antialiased min-h-screen">
+<body class="antialiased">
 
-<header class="sticky z-40 bg-fr-blk/95 backdrop-blur border-b border-fr-bd" style="top:env(safe-area-inset-top,0px)">
+<header class="sticky top-0 z-40 bg-fr-blk/95 backdrop-blur border-b border-fr-bd">
  <div class="h-1 bg-gradient-to-r from-fr-red via-fr-red to-fr-yel"></div>
- <div class="max-w-3xl mx-auto px-3 pt-2 pb-2">
+ <div class="max-w-3xl mx-auto px-3 py-2">
   <div class="flex items-center gap-2 mb-2">
-   <div class="w-8 h-8 bg-fr-red rounded-lg flex items-center justify-center shadow-lg shadow-fr-red/40">🏁</div>
-   <div class="leading-tight"><div class="text-[10px] font-bold uppercase tracking-widest text-fr-yel">Scuderia Ferrari HP · F1 2026</div><h1 class="text-base font-extrabold">Weekend Hub</h1></div>
+   <div class="w-8 h-8 bg-fr-red rounded-lg flex items-center justify-center font-bold">🏁</div>
+   <div><div class="text-[10px] font-bold uppercase text-fr-yel">Scuderia Ferrari HP</div><h1 class="text-sm font-extrabold">F1 Hub 2026</h1></div>
   </div>
-  <div id="wk" class="flex gap-2 overflow-x-auto ns"></div>
+  <div id="wk" class="flex gap-2 overflow-x-auto ns pb-1"></div>
  </div>
 </header>
 
-<main class="max-w-3xl mx-auto px-3 py-3 space-y-3 pb-28">
- <div id="hero"></div>
- <nav id="tabs" class="fixed bottom-0 left-0 right-0 z-40 bg-fr-blk/95 backdrop-blur border-t border-fr-bd" style="padding-bottom:env(safe-area-inset-bottom,0px)"><div class="max-w-3xl mx-auto grid grid-cols-6">
-  <button data-t="prog"><span class="text-lg block">📅</span>Orari</button><button data-t="strat"><span class="text-lg block">🧠</span>Strategie</button><button data-t="ris"><span class="text-lg block">🏁</span>Risultati</button><button data-t="camp"><span class="text-lg block">🏆</span>Classifica</button><button data-t="wx"><span class="text-lg block">🌦️</span>Meteo</button><button data-t="play"><span class="text-lg block">🎮</span>Gioca</button>
- </div></nav>
+<main class="max-w-3xl mx-auto px-3 py-3 space-y-3">
+ <div id="hero" class="bg-fr-card border border-fr-bd rounded-2xl p-4"></div>
 
- <section id="p-prog" class="pane"></section>
- <section id="p-strat" class="pane"></section>
- <section id="p-ris" class="pane"></section>
+ <nav class="fixed bottom-0 left-0 right-0 z-40 bg-fr-blk/95 border-t border-fr-bd">
+  <div class="max-w-3xl mx-auto grid grid-cols-4 text-center">
+   <button onclick="setTab('prog')" id="btn-prog" class="py-3 text-xs font-bold text-fr-red border-t-2 border-fr-red">📅 Orari</button>
+   <button onclick="setTab('camp')" id="btn-camp" class="py-3 text-xs font-bold text-gray-400 border-t-2 border-transparent">🏆 Classifica</button>
+   <button onclick="setTab('wx')" id="btn-wx" class="py-3 text-xs font-bold text-gray-400 border-t-2 border-transparent">🌦️ Meteo</button>
+   <button onclick="setTab('info')" id="btn-info" class="py-3 text-xs font-bold text-gray-400 border-t-2 border-transparent">ℹ️ Info</button>
+  </div>
+ </nav>
 
+ <section id="p-prog" class="pane on space-y-2"></section>
  <section id="p-camp" class="pane space-y-3">
-  <div id="seg" class="flex gap-2"></div>
-  <div id="c-drv" class="sub space-y-3">
-   <div class="bg-fr-card border border-fr-bd rounded-xl p-3"><div class="flex justify-between mb-2"><h2 class="font-bold text-sm">Piloti 2026</h2><span class="text-[10px] text-gray-400">Aggiornato post-Sepang</span></div><table class="w-full text-xs"><tbody id="db" class="divide-y divide-fr-bd/50"></tbody></table></div>
-   <div class="bg-fr-card border border-fr-bd rounded-xl p-3"><div class="relative h-44"><canvas id="dc"></canvas></div></div>
-  </div>
-  <div id="c-con" class="sub space-y-3 hidden">
-   <div class="bg-fr-card border border-fr-bd rounded-xl p-3"><h2 class="font-bold text-sm mb-2">Costruttori 2026</h2><table class="w-full text-xs"><tbody id="cb" class="divide-y divide-fr-bd/50"></tbody></table></div>
-   <div class="bg-fr-card border border-fr-bd rounded-xl p-3"><div class="relative h-52"><canvas id="cc"></canvas></div></div>
-  </div>
-  <div id="c-fer" class="sub hidden bg-fr-card border border-fr-bd rounded-xl p-3">
-   <h2 class="text-center text-lg font-black mb-3">Hamilton vs Leclerc</h2>
-   <div class="grid grid-cols-2 gap-2">
-    <div class="carbon border border-fr-bd rounded-xl p-3"><span class="text-2xl font-black text-fr-yel">#44</span><h3 class="text-sm font-black">Lewis Hamilton</h3><p class="text-xs text-gray-400 mb-2">3° · 214 pts</p><div class="space-y-1.5 text-[11px]" id="h1"></div></div>
-    <div class="carbon border border-fr-bd rounded-xl p-3"><span class="text-2xl font-black text-fr-red">#16</span><h3 class="text-sm font-black">Charles Leclerc</h3><p class="text-xs text-gray-400 mb-2">4° · 191 pts</p><div class="space-y-1.5 text-[11px]" id="h2"></div></div>
-   </div>
+  <div class="bg-fr-card border border-fr-bd rounded-xl p-3">
+   <h2 class="font-bold text-sm mb-2">Piloti 2026</h2>
+   <table class="w-full text-xs">
+    <tr><td class="py-1.5 font-bold">3°</td><td class="py-1.5 text-white">Lewis Hamilton (Ferrari)</td><td class="py-1.5 text-right font-bold text-fr-yel">214 pts</td></tr>
+    <tr><td class="py-1.5 font-bold">4°</td><td class="py-1.5 text-white">Charles Leclerc (Ferrari)</td><td class="py-1.5 text-right font-bold text-fr-yel">191 pts</td></tr>
+   </table>
   </div>
  </section>
-
- <section id="p-wx" class="pane"></section>
- <section id="p-play" class="pane"></section>
+ <section id="p-wx" class="pane space-y-3"></section>
+ <section id="p-info" class="pane">
+  <div class="bg-fr-card border border-fr-bd rounded-xl p-4 text-xs text-gray-300 space-y-2">
+   <h2 class="font-bold text-sm text-white">Informazioni Hub</h2>
+   <p>App creata per la Scuderia Ferrari. Gli orari si aggiornano automaticamente in base al GP selezionato in alto.</p>
+  </div>
+ </section>
 </main>
 
-<div id="veil" class="fixed inset-0 bg-black/60 z-50"></div>
-<div id="sheet" class="fixed left-0 right-0 bottom-0 z-50 bg-fr-card border-t border-fr-red rounded-t-2xl p-4 max-w-3xl mx-auto" style="padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))"></div>
-
 <script>
-const $=s=>document.querySelector(s);
-const S=(n,a,b,d,note)=>({n,a:new Date(a),b:b?new Date(b):null,d,note});
-
-// Calendario Dinamico Aggiornato con Coordinate per Meteo Open-Meteo
 const W={
- sg:{id:"sg",name:"Singapore",tag:"Prossimo",dates:"9–11 ott",tz:"Asia/Singapore",tzn:"Singapore",kind:"Weekend Sprint",title:"GP di Singapore",lat:1.2914,lon:103.8644,
-  sess:[S("Prove libere 1","2026-10-09T09:30Z","2026-10-09T10:30Z","60 min","Unica sessione di prove libere."),S("Qualifica Sprint","2026-10-09T13:30Z","2026-10-09T14:14Z","44 min","Griglia di partenza della Sprint."),S("Sprint","2026-10-10T10:00Z","2026-10-10T11:00Z","21 giri","Prima Sprint a Marina Bay in luce diurna."),S("Qualifica","2026-10-10T14:00Z","2026-10-10T15:00Z","60 min","Sotto i riflettori per la griglia gara."),S("Gara","2026-10-11T13:00Z","2026-10-11T15:00Z","62 giri","Partenza in notturna.")]},
- usa:{id:"usa",name:"Austin",tag:"Futuro",dates:"23–25 ott",tz:"America/Chicago",tzn:"Stati Uniti",kind:"Weekend Sprint",title:"GP degli Stati Uniti",lat:30.1328,lon:-97.6411,
-  sess:[S("Prove libere 1","2026-10-23T18:30Z","2026-10-23T19:30Z","60 min","Unica sessione di prove libere al COTA."),S("Qualifica Sprint","2026-10-23T22:30Z","2026-10-23T23:14Z","44 min","Griglia per la Sprint americana."),S("Sprint","2026-10-24T18:00Z","2026-10-24T19:00Z","19 giri","Gara Sprint sul circuito di Austin."),S("Qualifica","2026-10-24T22:00Z","2026-10-24T23:00Z","60 min","Qualifiche ufficiali del GP."),S("Gara","2026-10-25T19:00Z","2026-10-25T21:00Z","56 giri","Gran Premio degli Stati Uniti d'America.")]},
- mex:{id:"mex",name:"Messico",tag:"Futuro",dates:"30 ott – 1 nov",tz:"America/Mexico_City",tzn:"Messico",kind:"Weekend Classico",title:"GP di Città del Messico",lat:19.4042,lon:-99.0907,
-  sess:[S("Prove libere 1","2026-10-30T18:30Z","2026-10-30T19:30Z","60 min","Primo turno di libere all'Autodromo Hermanos Rodríguez."),S("Prove libere 2","2026-10-30T22:00Z","2026-10-30T23:00Z","60 min","Test long run ad alta quota."),S("Prove libere 3","2026-10-31T17:30Z","2026-10-31T18:30Z","60 min","Rifinitura assetti."),S("Qualifica","2026-10-31T21:00Z","2026-10-31T22:00Z","60 min","Lotta per la pole nella rarefatta aria di Città del Messico."),S("Gara","2026-11-01T20:00Z","2026-11-01T22:00Z","71 giri","Gran Premio di Città del Messico.")]}
+ sg:{id:"sg",name:"Singapore",dates:"9–11 Ott",flag:"🇸🇬",lat:1.2914,lon:103.8644,sess:[["Prove Libere 1","Venerdì, 09:30"],["Qualifica Sprint","Venerdì, 13:30"],["Sprint Race","Sabato, 10:00"],["Qualifiche GP","Sabato, 14:00"],["Gran Premio","Domenica, 13:00"]]},
+ usa:{id:"usa",name:"Austin",dates:"23–25 Ott",flag:"🇺🇸",lat:30.1328,lon:-97.6411,sess:[["Prove Libere 1","Venerdì, 18:30"],["Qualifica Sprint","Venerdì, 22:30"],["Sprint Race","Sabato, 18:00"],["Qualifiche GP","Sabato, 22:00"],["Gran Premio","Domenica, 19:00"]]},
+ mex:{id:"mex",name:"Messico",dates:"30 Ott - 1 Nov",flag:"🇲🇽",lat:19.4042,lon:-99.0907,sess:[["Prove Libere 1","Venerdì, 18:30"],["Prove Libere 2","Venerdì, 22:00"],["Prove Libere 3","Sabato, 17:30"],["Qualifiche GP","Sabato, 21:00"],["Gran Premio","Domenica, 20:00"]]}
 };
 
-// Seleziona automaticamente il GP in base alla data corrente
-function autoSelectWeekend(){
- const now=Date.now();
- for(const[k,w]of Object.entries(W)){
-  const last=w.sess[w.sess.length-1];
-  if(last && last.a.getTime()>now) return k;
- }
- return "sg";
-}
-let wk=autoSelectWeekend(), tab="prog";
+let curW="sg", curTab="prog";
 
-const D=[[1,"Andrea Kimi Antonelli","Mercedes",5,320],[2,"George Russell","Mercedes",3,236],[3,"Lewis Hamilton","Ferrari",1,214,1],[4,"Charles Leclerc","Ferrari",1,191,1],[5,"Lando Norris","McLaren",2,188],[6,"Max Verstappen","Red Bull",1,188],[7,"Oscar Piastri","McLaren",1,128],[8,"Isack Hadjar","Red Bull",0,96]];
-const C=[[1,"Mercedes",556],[2,"Scuderia Ferrari",405,1],[3,"McLaren",316],[4,"Red Bull Racing",298],[5,"Racing Bulls",89],[6,"Alpine",68]];
-const ST=[
- {t:"Ferrari",ic:"🔴",f:1,h:"Gestione gomma e muretto",p:["A Singapore la gara si decide spesso sui dettagli di Safety Car e strategie a sosta singola. Hamilton ha il record storico sulla pista."]},
- {t:"Mercedes",ic:"⚪",h:"Difesa della leadership",p:["Antonelli gestisce un solido vantaggio in classifica, con Russell pronto a insidiare i podi."]},
- {t:"Red Bull",ic:"🔵",h:"Inseguimento costruttori",p:["Red Bull spinge per recuperare terreno prezioso su McLaren e Ferrari nella volata finale."]}
-];
+function renderWk(){
+ document.getElementById("wk").innerHTML=Object.values(W).map(w=>`
+  <button onclick="curW='${w.id}';render()" class="shrink-0 px-3 py-2 rounded-xl border text-left ${w.id===curW?'bg-fr-red border-fr-red text-white':'bg-fr-card border-fr-bd text-gray-300'}">
+   <div class="text-[10px] uppercase font-semibold">${w.flag} ${w.dates}</div>
+   <div class="text-xs font-extrabold">${w.name}</div>
+  </button>`).join("");
+ 
+ const w=W[curW];
+ document.getElementById("hero").innerHTML=`
+  <div class="text-[10px] font-bold uppercase text-fr-yel">${w.flag} GP di ${w.name} (${w.dates})</div>
+  <div class="text-base font-black mt-1">Weekend in corso</div>
+  <div class="text-xs text-gray-400 mt-0.5">Orari ufficiali in ora italiana (CET/CEST)</div>`;
 
-const FL={sg:"🇸🇬",usa:"🇺🇸",mex:"🇲🇽"};
-const fmt=(d,tz,o)=>new Intl.DateTimeFormat("it-IT",{timeZone:tz,...o}).format(d);
-const hm=(d,tz)=>fmt(d,tz,{hour:"2-digit",minute:"2-digit"});
-const day=(d,tz)=>fmt(d,tz,{weekday:"long",day:"numeric",month:"long"});
-const IT="Europe/Rome";
-function until(a){const m=Math.round((a-Date.now())/60000);if(m<=0)return null;const d=Math.floor(m/1440),h=Math.floor(m%1440/60),mm=m%60;return d?`${d}g ${h}h`:h?`${h}h ${mm}m`:`${mm}m`}
-function state(s){const n=Date.now();return n>=(s.b||s.a)?"Concluso":n>=s.a?"In corso":"Tra "+until(s.a)}
-
-function head(){
- $("#wk").innerHTML=Object.values(W).map(w=>`<button data-w="${w.id}" class="shrink-0 min-w-[148px] rounded-xl border px-3 py-2 text-left ${w.id==wk?'bg-fr-red border-fr-red text-white':'bg-fr-card border-fr-bd text-gray-300'}"><div class="text-[10px] uppercase font-semibold opacity-80">${w.tag}</div><div class="text-sm font-extrabold leading-tight">${FL[w.id]} ${w.name}</div><div class="text-[11px] opacity-80">${w.dates} · ${w.kind}</div></button>`).join("");
- $("#wk").querySelectorAll("button").forEach(b=>b.onclick=()=>{wk=b.dataset.w;render();fetchWeather()});
- const sel=$("#wk .bg-fr-red");if(sel)$("#wk").scrollLeft=sel.offsetLeft-12;
- const w=W[wk];let h;
- const nx=w.sess.find(s=>(s.b||s.a)>Date.now());NXT=nx?nx.a:0;
- h=`<div class="relative overflow-hidden rounded-2xl border border-fr-bd p-4" style="background:linear-gradient(135deg,#34161d 0%,#1b1f28 60%)"><div class="relative"><div class="text-[10px] font-semibold uppercase tracking-wide text-fr-yel">${FL[w.id]} ${w.title}</div>${nx?`<div class="text-2xl font-black mt-1">${nx.n}</div><div class="text-xs text-gray-300 capitalize">🇮🇹 ${day(nx.a,IT)} ·${hm(nx.a,IT)}</div><div id="cd" class="flex gap-2 mt-3"></div>`:`<div class="text-lg font-bold mt-1">Weekend concluso</div>`}<div class="text-[11px] text-gray-400 mt-3">Scuderia Ferrari HP · Hub ufficiale 2026</div></div></div>`;
- $("#hero").innerHTML=h;
+ document.getElementById("p-prog").innerHTML=w.sess.map(s=>`
+  <div class="bg-fr-card border border-fr-bd rounded-xl p-3 flex justify-between items-center">
+   <div class="text-sm font-bold">${s[0]}</div>
+   <div class="text-xs font-black text-fr-yel bg-fr-blk px-2.5 py-1 rounded-lg border border-fr-bd">${s[1]}</div>
+  </div>`).join("");
 }
 
-function tabs(){document.querySelectorAll("#tabs button").forEach(b=>{const on=b.dataset.t==tab;b.className="py-2 text-[10px] font-semibold flex flex-col items-center gap-0.5 border-t-2 "+(on?"text-white border-fr-red bg-fr-red/10":"text-gray-400 border-transparent");b.onclick=()=>{tab=b.dataset.t;render();scrollTo(0,0)}});
- document.querySelectorAll(".pane").forEach(p=>p.classList.toggle("on",p.id=="p-"+tab));
- if(tab=="camp")setTimeout(()=>Object.values(ch).forEach(c=>c.resize()),30)}
-
-function prog(){const w=W[wk];
- $("#p-prog").innerHTML=`<p class="text-[11px] text-gray-400 mb-2">Orari in ora italiana. Tocca per i dettagli.</p><div class="space-y-1.5">`+w.sess.map((s,i)=>`<div class="bg-fr-card border border-fr-bd rounded-xl p-3 flex items-center gap-3"><div class="w-[76px] text-center"><div class="text-[9px] text-gray-400">ITALIA</div><div class="text-xl font-black text-fr-yel">${hm(s.a,IT)}</div></div><div class="flex-1"><div class="font-bold text-sm">${s.n}</div><div class="text-[11px] text-gray-400">${s.d}</div></div><span class="text-[10px] px-2 py-1 rounded-full bg-fr-red/20 text-fr-yel">${state(s)}</span></div>`).join("")+"</div>"}
-
-function strat(){
- $("#p-strat").innerHTML=`<div class="space-y-2">`+ST.map(s=>`<div class="bg-fr-card border border-fr-bd rounded-xl p-3"><div class="font-bold text-sm flex items-center gap-2"><span>${s.ic}</span> ${s.t}</div><div class="text-xs text-gray-300 mt-1">${s.h}</div><ul class="mt-2 text-xs text-gray-400 list-disc pl-4">${s.p.map(x=>`<li>${x}</li>`).join("")}</ul></div>`).join("")+"</div>"}
-
-function ris(){
- $("#p-ris").innerHTML=`<div class="bg-fr-card border border-fr-bd rounded-xl p-6 text-center text-sm text-gray-400">Risultati disponibili al termine delle sessioni di questo weekend.</div>`;
-}
-
-// Meteo Dinamico Reale via Open-Meteo API
-async function fetchWeather(){
- const w=W[wk];
- $("#p-wx").innerHTML=`<div class="bg-fr-card border border-fr-bd rounded-xl p-4 text-center text-xs text-gray-400">🔄 Caricamento meteo live per ${w.name}...</div>`;
+async function renderWx(){
+ const w=W[curW];
+ const box=document.getElementById("p-wx");
+ box.innerHTML=`<div class="bg-fr-card border border-fr-bd rounded-xl p-4 text-center text-xs text-gray-400">Caricamento meteo...</div>`;
  try{
   const res=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${w.lat}&longitude=${w.lon}&daily=temperature_2m_max,precipitation_probability_max&timezone=auto`);
   const data=await res.json();
@@ -148,16 +97,23 @@ async function fetchWeather(){
   const tmax=data.daily.temperature_2m_max;
   const rain=data.daily.precipitation_probability_max;
   
-  $("#p-wx").innerHTML=`<div class="bg-fr-card border border-fr-bd rounded-xl p-3"><h2 class="font-bold text-sm mb-1">Meteo Live · ${w.name}</h2><p class="text-xs text-gray-400 mb-3">Previsioni in tempo reale</p><div class="grid grid-cols-3 gap-2 text-center">`+
-  days.map((d,i)=>`<div class="bg-fr-blk/70 rounded-lg p-2"><div class="text-[11px] text-gray-400">${d}</div><div class="text-2xl">🌤️</div><div class="font-black">${tmax[i]}°C</div><div class="text-[11px] text-fr-yel">☔ ${rain[i]}%</div></div>`).join("")+`</div></div>`;
+  box.innerHTML=`<div class="bg-fr-card border border-fr-bd rounded-xl p-3"><h2 class="font-bold text-sm mb-2">Meteo Live · ${w.name}</h2><div class="grid grid-cols-3 gap-2 text-center">`+
+   days.map((d,i)=>`<div class="bg-fr-blk border border-fr-bd rounded-lg p-2"><div class="text-[10px] text-gray-400">${d}</div><div class="text-xl my-1">🌤️</div><div class="font-black text-xs">${tmax[i]}°C</div><div class="text-[10px] text-fr-yel">☔ ${rain[i]}%</div></div>`).join("")+`</div></div>`;
  }catch(e){
-  $("#p-wx").innerHTML=`<div class="bg-fr-card border border-fr-bd rounded-xl p-4 text-center text-xs text-red-400">Impossibile caricare il meteo live.</div>`;
+  box.innerHTML=`<div class="bg-fr-card border border-fr-bd rounded-xl p-4 text-center text-xs text-red-400">Impossibile caricare il meteo.</div>`;
  }
 }
 
-const fb='<span class="ml-1 px-1 py-0.5 bg-fr-red text-[9px] font-bold rounded">F</span>';
-$("#db").innerHTML=D.map(d=>`<tr><td class="p-2 font-bold">${d[0]}°</td><td class="p-2 text-white">${d[1]}${d[5]?fb:''}</td><td class="p-2 text-right font-extrabold text-fr-yel">${d[4]}</td></tr>`).join("");
-$("#cb").innerHTML=C.map(c=>`<tr><td class="p-2 font-bold">${c[0]}°</td><td class="p-2 text-white">${c[1]}</td><td class="p-2 text-right font-extrabold text-fr-yel">${c[2]}</td></tr>`).join("");
-$("#seg").innerHTML=[["c-drv","Piloti"],["c-con","Costruttori"],["c-fer","Ferrari"]].map((s,i)=>`<button data-s="${s[0]}" class="px-4 py-1.5 rounded-full text-xs font-semibold border ${i?'bg-fr-card text-gray-300 border-fr-bd':'bg-fr-red text-white border-fr-red'}">${s[1]}</button>`).join("");
-$("#seg").querySelectorAll("button").forEach(b=>b.onclick=()=>{$("#seg").querySelectorAll("button").forEach(x=>x.className="px-4 py-1.5 rounded-full text-xs font-semibold border bg-fr-card text-gray-300 border-fr-bd");b.className="px-4 py-1.5 rounded-full text-xs font-semibold border bg
+function setTab(t){
+ curTab=t;
+ ["prog","camp","wx","info"].forEach(x=>{
+  document.getElementById("p-"+x).classList.toggle("on",x===t);
+  document.getElementById("btn-"+x).className="py-3 text-xs font-bold border-t-2 "+(x===t?"text-fr-red border-fr-red":"text-gray-400 border-transparent");
+ });
+ if(t==="wx")renderWx();
+}
 
+renderWk();
+</script>
+</body>
+</html>
