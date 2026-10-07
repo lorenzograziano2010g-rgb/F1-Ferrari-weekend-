@@ -232,130 +232,419 @@ function render(){head();prog();strat();ris();wx();tabs();if(!window._pl){play()
 render();
 tick();
 setInterval(tick,1000);
+ /* =========================================================
+   F1 ONLINE → COLLEGAMENTO ALLA UI ESISTENTE
+   Non modifica HTML/CSS/design
+   ========================================================= */
 
-/* =========================
-   AGGIORNAMENTO DATI F1
-   ========================= */
+const F1_ONLINE = {
+  J: "https://api.jolpi.ca/ergast/f1",
+  O: "https://api.openf1.org/v1"
+};
 
-async function aggiornaDatiF1() {
-    try {
-        const risposta = await fetch(
-            "https://api.jolpi.ca/ergast/f1/current.json"
+async function f1JSON(url){
+  const r = await fetch(url,{cache:"no-store"});
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  return await r.json();
+}
+
+/* ---------------------------------------------------------
+   CLASSIFICHE
+   --------------------------------------------------------- */
+
+async function f1Classifiche(){
+
+  try{
+
+    const [pd,pc] = await Promise.all([
+      f1JSON(`${F1_ONLINE.J}/2026/driverstandings.json`),
+      f1JSON(`${F1_ONLINE.J}/2026/constructorstandings.json`)
+    ]);
+
+    const drivers =
+      pd?.MRData?.StandingsTable?.StandingsLists?.[0]
+        ?.DriverStandings || [];
+
+    const teams =
+      pc?.MRData?.StandingsTable?.StandingsLists?.[0]
+        ?.ConstructorStandings || [];
+
+    if(drivers.length){
+
+      D.splice(0,D.length,...drivers.map((x,i)=>[
+        Number(x.position)||i+1,
+        `${x.Driver?.givenName||""} ${x.Driver?.familyName||""}`.trim(),
+        x.Constructors?.[0]?.name || "",
+        Number(x.wins)||0,
+        Number(x.points)||0,
+        x.Constructors?.some(c=>c.constructorId==="ferrari") ? 1 : 0
+      ]));
+
+    }
+
+    if(teams.length){
+
+      C.splice(0,C.length,...teams.map((x,i)=>[
+        Number(x.position)||i+1,
+        x.Constructor?.name || "",
+        Number(x.points)||0,
+        x.Constructor?.constructorId==="ferrari" ? 1 : 0
+      ]));
+
+    }
+
+    return true;
+
+  }catch(e){
+
+    console.warn("Classifiche online non disponibili:",e);
+    return false;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   RISULTATO ULTIMO GP
+   --------------------------------------------------------- */
+
+async function f1UltimoRisultato(){
+
+  try{
+
+    const data =
+      await f1JSON(
+        `${F1_ONLINE.J}/2026/last/results.json`
+      );
+
+    const results =
+      data?.MRData?.RaceTable?.Races?.[0]?.Results || [];
+
+    if(!results.length) return false;
+
+    const converted =
+      results.map(x=>[
+        Number(x.position)||0,
+        `${x.Driver?.givenName||""} ${x.Driver?.familyName||""}`.trim(),
+        x.Constructor?.name || "",
+        x.Time?.time || x.status || "",
+        Number(x.grid)||0,
+        Number(x.laps)||0,
+        Number(x.points)||0,
+        x.Constructor?.constructorId==="ferrari" ? 1 : 0,
+        x.status && !/finished|lap/i.test(x.status) ? 1 : 0
+      ]);
+
+    /*
+      L'ultimo GP può essere Sepang, Baku o Madrid
+      a seconda di ciò che l'API considera disponibile.
+      Aggiorniamo l'array corrispondente senza
+      cambiare la struttura della UI.
+    */
+
+    const races =
+      data?.MRData?.RaceTable?.Races || [];
+
+    const race =
+      races[0];
+
+    const circuit =
+      race?.Circuit?.circuitId || "";
+
+    if(/sepang|malaysia/i.test(circuit)){
+
+      M.splice(0,M.length,...converted);
+
+    }else if(/baku|azerbaijan/i.test(circuit)){
+
+      A.splice(0,A.length,...converted);
+
+    }else if(/madrid|spain/i.test(circuit)){
+
+      R.splice(0,R.length,...converted);
+
+    }
+
+    window.F1_ONLINE_LAST_RACE = race;
+
+    return true;
+
+  }catch(e){
+
+    console.warn("Risultato online non disponibile:",e);
+    return false;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   SESSIONI → ORARI DEL WEEKEND
+   OpenF1
+   --------------------------------------------------------- */
+
+async function f1Sessioni(){
+
+  try{
+
+    const data =
+      await f1JSON(
+        `${F1_ONLINE.O}/sessions?year=2026`
+      );
+
+    if(!Array.isArray(data) || !data.length)
+      return false;
+
+    window.F1_ONLINE_SESSIONS = data;
+
+    /*
+      Aggiorniamo solo il weekend Singapore,
+      che è quello attualmente selezionabile
+      come "Prossimo" nella tua UI.
+    */
+
+    const sg =
+      data.filter(s =>
+        /Singapore/i.test(
+          s.country_name || ""
+        )
+      );
+
+    if(!sg.length) return true;
+
+    const w = W.sg;
+
+    const names = {
+      "Practice 1":"Prove libere 1",
+      "Practice 2":"Prove libere 2",
+      "Practice 3":"Prove libere 3",
+      "Sprint Qualifying":"Qualifica Sprint",
+      "Sprint Shootout":"Qualifica Sprint",
+      "Sprint":"Sprint",
+      "Qualifying":"Qualifica",
+      "Race":"Gara"
+    };
+
+    const newSessions = sg
+      .filter(s=>names[s.session_name])
+      .sort(
+        (a,b)=>
+          new Date(a.date_start)-
+          new Date(b.date_start)
+      )
+      .map(s=>
+        S(
+          names[s.session_name],
+          s.date_start,
+          s.date_end,
+          s.session_name==="Race"
+            ? "max 2 h"
+            : "60 min",
+          "Dati sessione aggiornati online."
+        )
+      );
+
+    if(newSessions.length){
+
+      w.sess.splice(
+        0,
+        w.sess.length,
+        ...newSessions
+      );
+
+    }
+
+    return true;
+
+  }catch(e){
+
+    console.warn("Sessioni online non disponibili:",e);
+    return false;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   METEO DELL'ULTIMA SESSIONE
+   --------------------------------------------------------- */
+
+async function f1Meteo(){
+
+  try{
+
+    const data =
+      await f1JSON(
+        `${F1_ONLINE.O}/weather?session_key=latest`
+      );
+
+    if(!Array.isArray(data) || !data.length)
+      return false;
+
+    const w =
+      data[data.length-1];
+
+    window.F1_ONLINE_WEATHER = w;
+
+    console.log(
+      "🌤️ Meteo sessione:",
+      w.air_temperature+"°C",
+      "pioggia:",
+      w.rainfall
+    );
+
+    return true;
+
+  }catch(e){
+
+    console.warn("Meteo online non disponibile:",e);
+    return false;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   TIMESTAMP
+   --------------------------------------------------------- */
+
+function f1UltimoAggiornamento(){
+
+  const now =
+    new Date();
+
+  window.F1_ONLINE_LAST_UPDATE =
+    now;
+
+  console.log(
+    "🕐 Ultimo aggiornamento F1:",
+    now.toLocaleString("it-IT")
+  );
+
+}
+
+
+/* ---------------------------------------------------------
+   AGGIORNA LA GRAFICA ESISTENTE
+   --------------------------------------------------------- */
+
+function f1RefreshUI(){
+
+  /*
+    Non cambiamo nessun elemento HTML.
+    Richiamiamo semplicemente le funzioni
+    che il tuo sito usa già.
+  */
+
+  try{
+    head();
+    prog();
+    if(tab==="ris") ris();
+    if(tab==="wx") wx();
+    tabs();
+
+    if(
+      typeof ch!=="undefined" &&
+      ch.d &&
+      ch.c
+    ){
+
+      ch.d.data.labels =
+        D.slice(0,6).map(
+          d=>d[1].split(" ").pop()
         );
 
-        if (!risposta.ok) return;
+      ch.d.data.datasets[0].data =
+        D.slice(0,6).map(
+          d=>Number(d[4])
+        );
 
-        const dati = await risposta.json();
+      ch.d.update();
 
-        window.F1_CALENDARIO =
-            dati.MRData.RaceTable.Races || [];
+      ch.c.data.labels =
+        C.slice(0,4).map(
+          c=>c[1]
+        );
 
-        console.log("✅ Calendario F1 aggiornato");
+      ch.c.data.datasets[0].data =
+        C.slice(0,4).map(
+          c=>Number(c[2])
+        );
 
-    } catch (errore) {
-        console.log("F1 API non disponibile:", errore);
+      ch.c.update();
+
     }
+
+  }catch(e){
+
+    console.warn(
+      "UI F1 non aggiornata:",
+      e
+    );
+
+  }
 }
 
-aggiornaDatiF1();
-setInterval(aggiornaDatiF1, 6 * 60 * 60 * 1000);
- /* =========================
-   CLASSIFICHE F1 LIVE
-   ========================= */
 
-async function aggiornaClassificheLive() {
-    try {
-        const [pilotiRes, teamRes] = await Promise.all([
-            fetch("https://api.jolpi.ca/ergast/f1/current/driverstandings.json"),
-            fetch("https://api.jolpi.ca/ergast/f1/current/constructorstandings.json")
-        ]);
+/* ---------------------------------------------------------
+   AGGIORNAMENTO COMPLETO
+   --------------------------------------------------------- */
 
-        if (!pilotiRes.ok || !teamRes.ok) return;
+async function f1AggiornaTutto(){
 
-        const pilotiData = await pilotiRes.json();
-        const teamData = await teamRes.json();
+  console.log(
+    "🏎️ Controllo dati F1 online..."
+  );
 
-        const piloti =
-            pilotiData.MRData.StandingsTable
-            .StandingsLists?.[0]?.DriverStandings || [];
+  const risultati =
+    await Promise.allSettled([
 
-        const team =
-            teamData.MRData.StandingsTable
-            .StandingsLists?.[0]?.ConstructorStandings || [];
+      f1Classifiche(),
+      f1UltimoRisultato(),
+      f1Sessioni(),
+      f1Meteo()
 
-        $("#db").innerHTML = piloti.map(s => {
-            const ferrari =
-                s.Constructors?.some(
-                    c => c.constructorId === "ferrari"
-                );
+    ]);
 
-            const nome =
-                `${s.Driver.givenName} ${s.Driver.familyName}`;
+  const ok =
+    risultati.some(
+      r =>
+        r.status==="fulfilled" &&
+        r.value===true
+    );
 
-            return `
-            <tr class="${ferrari ? "bg-red-950/30 border-l-2 border-l-fr-red font-semibold" : ""}">
-                <td class="p-2 w-8 font-bold text-gray-300">
-                    ${s.position}°
-                </td>
-                <td class="p-2 text-white">
-                    ${nome}
-                    ${ferrari ? fb : ""}
-                    <div class="text-[10px] font-normal text-gray-400">
-                        ${s.Constructors?.[0]?.name || ""}
-                        · ${s.wins || 0} vitt.
-                    </div>
-                </td>
-                <td class="p-2 text-right font-extrabold text-fr-yel">
-                    ${s.points}
-                </td>
-            </tr>`;
-        }).join("");
+  if(ok){
 
-        $("#cb").innerHTML = team.map(s => {
-            const ferrari =
-                s.Constructor?.constructorId === "ferrari";
+    f1UltimoAggiornamento();
+    f1RefreshUI();
 
-            return `
-            <tr class="${ferrari ? "bg-red-950/30 border-l-2 border-l-fr-red font-semibold" : ""}">
-                <td class="p-2 w-8 font-bold text-gray-300">
-                    ${s.position}°
-                </td>
-                <td class="p-2 text-white">
-                    ${s.Constructor?.name || ""}
-                </td>
-                <td class="p-2 text-right font-extrabold text-fr-yel">
-                    ${s.points}
-                </td>
-            </tr>`;
-        }).join("");
+    console.log(
+      "✅ Dati F1 collegati alla UI."
+    );
 
-        if (ch?.d) {
-            const primi6 = piloti.slice(0, 6);
-            ch.d.data.labels =
-                primi6.map(x => x.Driver.familyName);
-            ch.d.data.datasets[0].data =
-                primi6.map(x => Number(x.points));
-            ch.d.update();
-        }
+  }else{
 
-        if (ch?.c) {
-            const primi4 = team.slice(0, 4);
-            ch.c.data.labels =
-                primi4.map(x => x.Constructor.name);
-            ch.c.data.datasets[0].data =
-                primi4.map(x => Number(x.points));
-            ch.c.update();
-        }
+    console.warn(
+      "⚠️ Nessun dato online disponibile. Mantengo i dati originali."
+    );
 
-        console.log("✅ Classifiche F1 aggiornate");
+  }
 
-    } catch (errore) {
-        console.log("Classifiche live non disponibili:", errore);
-    }
 }
 
-aggiornaClassificheLive();
-setInterval(aggiornaClassificheLive, 6 * 60 * 60 * 1000);
+
+/* ---------------------------------------------------------
+   AVVIO
+   --------------------------------------------------------- */
+
+f1AggiornaTutto();
+
+
+/* ---------------------------------------------------------
+   AGGIORNAMENTO AUTOMATICO
+   --------------------------------------------------------- */
+
+setInterval(
+  f1AggiornaTutto,
+  15*60*1000
+);
+ 
  /* =========================
    TEST CONNESSIONE LIVE
    ========================= */
