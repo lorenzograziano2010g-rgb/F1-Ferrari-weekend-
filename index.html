@@ -251,60 +251,77 @@ async function f1JSON(url){
 /* ---------------------------------------------------------
    CLASSIFICHE
    --------------------------------------------------------- */
-
 async function f1Classifiche(){
-
   try{
+    const r=await fetch(
+      "https://api.openf1.org/v1/championship_drivers?session_key=latest",
+      {cache:"no-store"}
+    );
+    if(!r.ok) throw new Error("OpenF1 drivers");
+    const data=await r.json();
 
-    const [pd,pc] = await Promise.all([
-      f1JSON(`${F1_ONLINE.J}/2026/driverstandings.json`),
-      f1JSON(`${F1_ONLINE.J}/2026/constructorstandings.json`)
-    ]);
+    if(!Array.isArray(data)||!data.length) throw new Error("Nessuna classifica");
 
-    const drivers =
-      pd?.MRData?.StandingsTable?.StandingsLists?.[0]
-        ?.DriverStandings || [];
+    const drivers=await fetch(
+      "https://api.openf1.org/v1/drivers?session_key=latest",
+      {cache:"no-store"}
+    ).then(x=>{
+      if(!x.ok) throw new Error("OpenF1 driver info");
+      return x.json();
+    });
 
-    const teams =
-      pc?.MRData?.StandingsTable?.StandingsLists?.[0]
-        ?.ConstructorStandings || [];
+    const info={};
+    drivers.forEach(x=>{
+      info[x.driver_number]=x;
+    });
 
-    if(drivers.length){
+    data.sort((a,b)=>a.position_current-b.position_current);
 
-      D.splice(0,D.length,...drivers.map((x,i)=>[
-        Number(x.position)||i+1,
-        `${x.Driver?.givenName||""} ${x.Driver?.familyName||""}`.trim(),
-        x.Constructors?.[0]?.name || "",
-        Number(x.wins)||0,
-        Number(x.points)||0,
-        x.Constructors?.some(c=>c.constructorId==="ferrari") ? 1 : 0
-      ]));
+    D.length=0;
 
-    }
+    data.forEach(x=>{
+      const d=info[x.driver_number];
+      if(!d) return;
 
-    if(teams.length){
+      D.push([
+        x.position_current,
+        d.full_name || d.broadcast_name,
+        d.team_name || "",
+        0,
+        x.points_current
+      ]);
+    });
 
-      C.splice(0,C.length,...teams.map((x,i)=>[
-        Number(x.position)||i+1,
-        x.Constructor?.name || "",
-        Number(x.points)||0,
-        x.Constructor?.constructorId==="ferrari" ? 1 : 0
-      ]));
+    console.log("Classifica piloti aggiornata:",D);
 
-    }
+    const teams=await fetch(
+      "https://api.openf1.org/v1/championship_teams?session_key=latest",
+      {cache:"no-store"}
+    ).then(x=>{
+      if(!x.ok) throw new Error("OpenF1 teams");
+      return x.json();
+    });
+
+    teams.sort((a,b)=>a.position_current-b.position_current);
+
+    C.length=0;
+
+    teams.forEach(x=>{
+      C.push([
+        x.position_current,
+        x.team_name,
+        x.points_current
+      ]);
+    });
+
+    console.log("Classifica costruttori aggiornata:",C);
 
     return true;
-
   }catch(e){
-
-    console.warn("Classifiche online non disponibili:",e);
+    console.log("Classifiche online non disponibili:",e);
     return false;
   }
-}
-
-
-/* ---------------------------------------------------------
-   RISULTATO ULTIMO GP
+} RISULTATO ULTIMO GP
    --------------------------------------------------------- */
 
 async function f1UltimoRisultato(){
