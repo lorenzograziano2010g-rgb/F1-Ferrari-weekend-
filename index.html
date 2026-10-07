@@ -229,7 +229,36 @@ function gPts(){const op=(n)=>`<option value="0">–</option>`+Array.from({lengt
  $("#p0").onclick=()=>set([0,0,0,0,0,0]);$("#p1").onclick=()=>set([3,4,2,1,5,6]);u()}
 
 function render(){head();prog();strat();ris();wx();tabs();if(!window._pl){play();window._pl=1}}
-render();tick();setInterval(tick,1000);
+render();
+tick();
+setInterval(tick,1000);
+
+/* =========================
+   AGGIORNAMENTO DATI F1
+   ========================= */
+
+async function aggiornaDatiF1() {
+    try {
+        const risposta = await fetch(
+            "https://api.jolpi.ca/ergast/f1/current.json"
+        );
+
+        if (!risposta.ok) return;
+
+        const dati = await risposta.json();
+
+        window.F1_CALENDARIO =
+            dati.MRData.RaceTable.Races || [];
+
+        console.log("✅ Calendario F1 aggiornato");
+
+    } catch (errore) {
+        console.log("F1 API non disponibile:", errore);
+    }
+}
+
+aggiornaDatiF1();
+setInterval(aggiornaDatiF1, 6 * 60 * 60 * 1000);
 </script>
 </body>
 </html>
